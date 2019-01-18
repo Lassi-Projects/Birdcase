@@ -2,7 +2,7 @@
 by Lassi Valtari*/
 
 import React, {Component} from 'react';
-import {Alert, Button, ScrollView, StyleSheet, Text, View} from 'react-native';
+import {Alert, Button, FlatList, ScrollView, StyleSheet, Text, View} from 'react-native';
 
 /*
 Styles of the components:
@@ -20,7 +20,7 @@ const styles = StyleSheet.create ({
     height: 50,
     alignItems: 'center',
     backgroundColor: '#336419',
-    padding: (50 - 20)/2, 
+    padding: (50 - 30)/2, 
   },
   _appTitle: {
     color: 'whitesmoke',
@@ -28,9 +28,12 @@ const styles = StyleSheet.create ({
   },
 
   //List of Observations
-  _birdList: {
+  _birdListBackground: {
     flex:1,
     backgroundColor: 'whitesmoke',
+  },
+  _birdList: {
+
   },
 
   //Add button on the bottom of screen
@@ -55,6 +58,7 @@ class ObservationForm extends Component {
 
 /*Core app including main menu */
 export default class App extends Component {
+  //Action when trying to add new observation
   _openForm() {
     Alert.alert('Creating form...');
   }
@@ -65,24 +69,22 @@ export default class App extends Component {
         <View id="Title" style={styles._appTitleContainer}>
           <Text style={styles._appTitle}>BIRDCASE</Text>
         </View>
-        <View id="BirdsList" style={styles._birdList}>
+        {/**List of all the birds*/}
+        <View id="BirdsList" style={styles._birdListBackground}>
           <ScrollView>
-            <Text style={{fontSize: 30}}>List of birds here!</Text>
-            <Text style={{fontSize: 30}}>List of birds here!</Text>
-            <Text style={{fontSize: 30}}>List of birds here!</Text>
-            <Text style={{fontSize: 30}}>List of birds here!</Text>
-            <Text style={{fontSize: 30}}>List of birds here!</Text>
-            <Text style={{fontSize: 30}}>List of birds here!</Text>
-            <Text style={{fontSize: 30}}>List of birds here!</Text>
-            <Text style={{fontSize: 30}}>List of birds here!</Text>
-            <Text style={{fontSize: 30}}>List of birds here!</Text>
-            <Text style={{fontSize: 30}}>List of birds here!</Text>
-            <Text style={{fontSize: 30}}>List of birds here!</Text>
-            <Text style={{fontSize: 30}}>List of birds here!</Text>
-            <Text style={{fontSize: 30}}>List of birds here!</Text>
-            <Text style={{fontSize: 30}}>List of birds here!</Text>
+            <FlatList
+              numColumns
+              style={styles._birdList}
+              data={[
+                {key:'Amazing Bird'},
+                {key:'Epic Bird'},
+                {key:'Über bird'},
+              ]}
+              renderItem={({item}) => <Text style={{fontSize: 20}}>{item.key}</Text>}
+            />
           </ScrollView>
         </View>
+        {/*Button to add new bird in the list*/}
         <View id="AddNewButton" style={styles._addButton}>
           <Button
           color='#a7364f'
