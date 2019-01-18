@@ -1,13 +1,14 @@
-/*Birdwatching project for CGI Future Talent
-by Lassi Valtari*/
+/**Birdwatching project for CGI Future Talent
+*by Lassi Valtari*/
 
 import React, {Component} from 'react';
 import {Alert, Button, FlatList, ScrollView, StyleSheet, Text, View} from 'react-native';
+import {createStackNavigator, createAppContainer} from 'react-navigation';
 
-/*
-Styles of the components:
-Main menu in 3 parts: title, list and add-button
-Add form: TODO
+/**
+*Styles of the components:
+*Main menu in 3 parts: title, list and add-button
+*Add form: TODO
 */
 const styles = StyleSheet.create ({
   /*Main menu components*/
@@ -15,13 +16,8 @@ const styles = StyleSheet.create ({
     flex: 1,
   },
 
-  //Title and it's container
-  _appTitleContainer:{
-    height: 50,
-    alignItems: 'center',
-    backgroundColor: '#336419',
-    padding: (50 - 30)/2, 
-  },
+  //Header styles in const AppNavigator
+
   _appTitle: {
     color: 'whitesmoke',
     fontSize: 20,
@@ -45,30 +41,16 @@ const styles = StyleSheet.create ({
   //TODO
 })
 
-/*Handles observation adding form as seperate class - TODO*/
-class ObservationForm extends Component {
-  render() {
-    return (
-      <View>
-        <Text>"You're in form view!"</Text>
-      </View>
-    );
-  }
-}
-
-/*Core app including main menu */
-export default class App extends Component {
-  //Action when trying to add new observation
-  _openForm() {
-    Alert.alert('Creating form...');
-  }
+/**Core app including main menu*/
+class HomeScreen extends React.Component {
+  static navigationOptions = {
+    title: 'BIRDCASE',
+  };
 
   render() {
     return (
+      /**Main menu uses mainmenu styles */
       <View style={styles.mainmenu}>
-        <View id="Title" style={styles._appTitleContainer}>
-          <Text style={styles._appTitle}>BIRDCASE</Text>
-        </View>
         {/**List of all the birds*/}
         <View id="BirdsList" style={styles._birdListBackground}>
           <ScrollView>
@@ -88,11 +70,56 @@ export default class App extends Component {
         <View id="AddNewButton" style={styles._addButton}>
           <Button
           color='#a7364f'
-          onPress={this._openForm}
+          onPress={() => this.props.navigation.navigate('AddForm')}
           title="+ ADD NEW"
           />
         </View>
       </View>
     );
+  }
+}
+
+/**Handles observation adding form as seperate class - TODO*/
+class AddFormScreen extends React.Component {
+  static navigationOptions = {
+    title: 'Add new observation',
+  };
+
+  render() {
+    return (
+      <View>
+        <Text>"You're in form view!"</Text>
+      </View>
+    );
+  }
+}
+
+/**App Navigator - takes care of moving between screens */
+const AppNavigator = createStackNavigator(
+  {
+    /**Home screen address */
+    Home: HomeScreen,
+    /**Add form screen address */
+    AddForm: AddFormScreen,
+  },
+  {
+    /**App starts on Home page */
+    initialRouteName: "Home",
+
+    /**Header styles */
+    defaultNavigationOptions: {
+      headerStyle: {
+        backgroundColor: '#336419',
+      },
+      headerTintColor: 'whitesmoke',
+    },
+  }
+);
+const AppContainer = createAppContainer(AppNavigator);
+
+/**App component to run the show [start app]*/
+export default class App extends React.Component {
+  render() {
+    return <AppContainer />;
   }
 }
