@@ -4,6 +4,7 @@
 import React, {Component} from 'react';
 import {Alert, Button, FlatList, ScrollView, StyleSheet, Text, View} from 'react-native';
 import {createStackNavigator, createAppContainer} from 'react-navigation';
+import { TextInput } from 'react-native-gesture-handler';
 
 /**
 *Styles of the components:
@@ -41,7 +42,21 @@ const styles = StyleSheet.create ({
   //TODO
 })
 
-/**Core app including main menu*/
+/**
+ * Runtime data handling
+ * This keeps track of all observations created
+ */
+//Observation object constructor
+function Observation (name, rarity, notes, timestamp) {
+  this.name = name;
+  this.rarity = rarity;
+  this.notes = notes;
+  this.timestamp = timestamp;
+}
+//Array to keep track of Observations
+var observationArray = new Array();
+
+/**Home screen*/
 class HomeScreen extends React.Component {
   static navigationOptions = {
     title: 'BIRDCASE',
@@ -49,7 +64,7 @@ class HomeScreen extends React.Component {
 
   render() {
     return (
-      /**Main menu uses mainmenu styles */
+      /**Home screen uses mainmenu styles */
       <View style={styles.mainmenu}>
         {/**List of all the birds*/}
         <View id="BirdsList" style={styles._birdListBackground}>
@@ -85,11 +100,44 @@ class AddFormScreen extends React.Component {
     title: 'Add new observation',
   };
 
+  constructor(props){
+    super(props)
+
+    this.state = {
+      name: 'None',
+      rarity: 'Common',
+      notes: 'None',
+    }
+  }
+
   render() {
     return (
       <View>
-        <Text>"You're in form view!"</Text>
+        <View>
+          <TextInput
+            style={{height: 40}}
+            placeholder = "Name of the species"
+          ></TextInput>
+        </View>
+        <View id="AddNewButton" style={styles._addButton}>
+        {/**Save button */}
+        <Button
+        color='#a7364f'
+
+        /**Save clicked*/
+        onPress={() => {
+          /**Create new Observation */
+          var newObs = new Observation(this.state.name, 
+            this.state.rarity, this.state.notes, new Date())
+          //Add it to the Array
+          observationArray.push(newObs)
+          //Go back to main
+          this.props.navigation.goBack()
+        }}
+        title="SAVE"
+        />
       </View>
+    </View>
     );
   }
 }
