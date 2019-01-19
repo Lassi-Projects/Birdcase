@@ -2,9 +2,10 @@
 *by Lassi Valtari*/
 
 import React, {Component} from 'react';
-import {Alert, Button, FlatList, ListView, ScrollView, StyleSheet, Text, View} from 'react-native';
-import {createStackNavigator, createAppContainer} from 'react-navigation';
-import { TextInput } from 'react-native-gesture-handler';
+import {Alert, Button, FlatList, ScrollView, StyleSheet, Text, View} from 'react-native';
+import {createStackNavigator, createAppContainer, NavigationEvents} from 'react-navigation';
+import {TextInput} from 'react-native-gesture-handler';
+import {List, ListItem} from "react-native-elements";
 
 /**
 *Styles of the components:
@@ -47,71 +48,106 @@ var observationArray = new Array();
 
 /**Home screen*/
 class HomeScreen extends React.Component {
+  
   static navigationOptions = {
     title: 'BIRDCASE',
   };
 
   constructor(props) {
     super(props);
-    var dataSource = new ListView.DataSource({rowHasChanged:(rowSt, rowNd) => rowSt.guid != rowNd.guid});
-    
+
     this.state = {
-      dataSource: dataSource.cloneWithRows(observationArray),
       loading: false,
-    }
+      data: [],
+      refreshing: false,
+      seed: 0,
+    };
   }
 
   componentDidMount() {
     this.getTheData(function(json) {
       observationArray = json;
       this.setState({
-        dataSource: this.state.dataSource.cloneWithRows(observationArray),
+        data: observationArray,
         loading: false,
+        refreshing: false,
       });
     }.bind(this));
   }
 
   getTheData(callback) {
+    this.setState({
+      loading: true,
+      refreshing: false,
+    });
     callback(
-      [{
-        name: 'Testi Tikka',
-        rarity: 'Common',
-        notes: 'None',
-      },
-      {
-        name: 'Testi2 Tikka',
-        rarity: 'Common',
-        notes: 'None',
-      }]
-    )
-  }
-
-  renderRow(rowData, sectionID, rowID) {
-    return (
-      <View>
-        <Text numberOfLines={1}>{rowData.name} | {rowData.rarity} | {rowData.notes}</Text>
-      </View>
+      [
+        {
+          name: 'Birdie',
+          rarity: 'Common',
+          notes: 'No notes',
+          time: new Date(),
+        }
+      ]
     );
   }
 
+  refreshList = () => {
+    this.setState({
+      refreshing: true,
+      seed: this.state.seed + 1,
+    }, () => {
+      this.getTheData();
+    })
+  };
+
   render() {
 
-    var currentList =(this.state.loading)?<View/>:<ListView
-      dataSource = {this.state.dataSource}
-      renderRow= {this.renderRow.bind(this)
-      }></ListView>
+    var currentList =(this.state.loading)?<View/>:
+      <FlatList
+        keyExtractor={observation => {observation.time.getTime().toString()}}
+        data = {this.state.data}
+        refreshing ={this.state.refreshing}
+
+        onRefresh={this.refreshList}
+
+        renderItem= {({item:observation}) => (
+          <ListItem
+            component ={View}
+            title={<View style={{flex: 1, height: 30}}>
+              <View style={{flex: 1}}><Text style={{fontSize: 20}}>{observation.name}</Text></View>
+              
+            </View>}
+            subtitle= {<View style={{flex: 1, flexDirection: 'column'}}>
+              <View style={{flex: 1, flexDirection: 'row'}}>
+                <View style={{flex: 1}}><Text>{observation.time.getHours() + ":"
+                + observation.time.getMinutes() + " " 
+                + observation.time.toLocaleDateString()}</Text></View>
+                <View style={{flex: 1}}><Text>{observation.rarity}</Text></View>
+               </View>
+              <View style={{flex: 2}}><Text>{observation.notes}</Text></View>
+            </View>
+              
+              }
+          />
+        )}
+        ></FlatList>
 
     return (
+      
       /**Home screen uses mainmenu styles */
       <View style={styles.mainmenu}>
+        {/* <NavigationEvents
+          onWillFocus = {this.refreshList()}
+        ></NavigationEvents> */}
         {/**List of all the birds*/}
-        <View id="BirdsList" style={styles._birdListBackground}>
+        <View  style={styles._birdListBackground}>
           <ScrollView>
             {currentList}
           </ScrollView>
         </View>
         {/*Button to add new bird in the list*/}
-        <View id="AddNewButton" style={styles._addButton}>
+        <View style={styles._addButton}>
           <Button
           color='#a7364f'
           onPress={() => this.props.navigation.navigate('AddForm')}
@@ -160,6 +196,7 @@ class AddFormScreen extends React.Component {
             name: this.state.name, 
             rarity: this.state.rarity, 
             notes: this.state.notes,
+            time: new Date(),
           }
           observationArray.push(newObs)
           //Go back to main
