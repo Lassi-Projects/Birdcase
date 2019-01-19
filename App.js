@@ -1,5 +1,5 @@
 /**Birdwatching project for CGI Future Talent
-*by Lassi Valtari*/
+ *by Lassi Valtari*/
 
 import React, { Component } from 'react';
 import { Alert, Button, FlatList, ScrollView, StyleSheet, Text, View } from 'react-native';
@@ -9,98 +9,130 @@ import { List, ListItem } from "react-native-elements";
 import Dialog from "react-native-dialog";
 
 /**
-*Styles of the components:
-*Main menu in 3 parts: title, list and add-button
-*Add form: TODO
-*/
+ *Styles of the components:
+ */
 const styles = StyleSheet.create({
-  /*Main menu components*/
-  mainmenu: {
+  /** HEADER styles in const AppNavigator */
+
+  /**
+   * Main menu components
+   */
+  homescreen: {
     flex: 1,
   },
-
-  //Header styles in const AppNavigator
 
   _appTitle: {
     color: 'whitesmoke',
     fontSize: 20,
   },
 
-  //List of Observations
+  /** 
+   * List of Observations
+   */
   _birdListBackground: {
     flex: 1,
     backgroundColor: 'whitesmoke',
   },
-  _birdList: {
-
-  },
+  /**
+   * BirdList item styles are with the rest of the code 
+   */
 
   //Add button on the bottom of screen
   _addButton: {
     height: 35,
   },
 
-  /*Add form components*/
-  //TODO
+  /**
+   * Add form components
+   */
 })
 
-//Array of ongoing observations
+//Array of observations in Home screen Bird list
 var observationArray = new Array();
 
-/**Home screen*/
+/**
+ * Home screen
+ */
 class HomeScreen extends React.Component {
 
+  //Navigation bar text
   static navigationOptions = {
     title: 'BIRDCASE',
   };
 
+  //CONSTRUCTOR for HomeScreen
   constructor(props) {
     super(props);
 
     this.state = {
+      //Data contains items rendered in the Bird list
       data: [],
+      //Tracks if screen is being refreshed
       refreshing: false,
+      //Tracks if screen is being loading
       loading: false,
+      //Seed to ensure state change is noticed by refresher
       seed: 0,
     };
   }
 
+  /** Sorting tool for the BirdList
+   * takes to params: list to be sorted and key it is sorted by:
+   * 'Date' [TODO]:['Name and Rarity']*/
   sortObservations(list, by) {
+    //creates a temporary list where sorted observations are saved
     var sortedList = new Array();
-    if(by == 'Date') {
-      while(list.length > 0) {
+
+    //Sort by DATE [TODO]:[Design more efficient]
+    if (by == 'Date') {
+      //Go through list until it is empty
+      while (list.length > 0) {
+        //Keep track of newest list item
         var index = 0;
-        for(var i = 0; i < list.length; ++i) {
-          if(list[i].time.getTime() > list[index].time.getTime()) {
-            list[index] = list[i];
+        //Compare all to find newest
+        for (var i = 0; i < list.length; ++i) {
+          if (list[i].time.getTime() < list[index].time.getTime()) {
             index = i;
           }
         }
+        //add newest to the list
         sortedList.push(list[index]);
+        //remove previously added item
         list.splice(index, 1)
       }
     };
-    list = sortedList;
-    return list;
+    //Return newly sorted list
+    return sortedList;
   }
 
+  //Upon entering the HomeScreen (startind App)
+  //saved Observation are to be loaded
   componentDidMount() {
-    this.getTheData(function (json) {
+    //Call function to load Observations
+    this.loadSaved(function (json) {
+      //Loaded observations in Array json
       observationArray = json;
+      //Sort observations by timestamp
       observationArray = this.sortObservations(observationArray, 'Date'),
-      this.setState({
-        data: observationArray,
-        refreshing: false,
-        loading: false,
-      });
+        //Finally inform about end of loading and refreshing
+        this.setState({
+          //observations reference added to data key
+          data: observationArray,
+          refreshing: false,
+          loading: false,
+        });
     }.bind(this));
   }
 
-  getTheData(callback) {
+  //Method for loading saved observations
+  loadSaved(callback) {
     this.setState({
-      refreshing: false,
+      //Inform about state of loading
+      refreshing: true,
+      loading: true,
     });
     callback(
+      //[TODO]:[Add file loading]
       [
         {
           name: 'Birdie',
@@ -112,71 +144,107 @@ class HomeScreen extends React.Component {
     );
   }
 
+  //Refreshing HomeScreen
   onRefresh = () => {
     this.setState({
+      //Inform we're refreshing
       refreshing: true,
+      //Seed to make sure refreshing works?
+      //[TODO]:[Figure out why this is needed?]
       seed: this.state.seed + 1,
     },
+      //After refreshing inform it's done.
+      //[TODO]:[Why does this need to be separate?]
       function () {
         this.setState({
           refreshing: false,
         })
-      }
-    );
+      });
   };
 
+  //Actions when navigating back to HomeScreen
   handleOnNavigateBack = () => {
+    //Refresh screen
     this.onRefresh()
   }
 
+  //HomeScreen RENDER
   render() {
 
+    //BIRDLIST - Start
+    //In separate variable to make things cleaner
     var currentList = (this.state.loading) ? <View /> :
+      //If caught middle of loading empty View is shown, otherwise Flatlist:
       <FlatList
+        //Every observations is given a key to identify
+        //Here I used time in milliseconds [TODO]:[Throws warning -> fix]
         keyExtractor={observation => { observation.time.getTime().toString() }}
+        //Flat list uses ObservationsList behind data-key
         data={this.state.data}
-        refreshing={this.state.refreshing}
 
+        //Refresh options
+        refreshing={this.state.refreshing}
         onRefresh={this.onRefresh}
 
+        //Actually handling items in the BirdList
         renderItem={({ item: observation }) => (
           <ListItem
-            component={View}
+            //Name of the Bird Species
             title={<View style={{ flex: 1, height: 30 }}>
-              <View style={{ flex: 1 }}><Text style={{ fontSize: 20 }}>{observation.name}</Text></View>
-
+              <Text style={{ fontSize: 20 }}>
+                {observation.name}
+              </Text>
             </View>}
+            //Date, Rarity and Notes
             subtitle={<View style={{ flex: 1, flexDirection: 'column' }}>
               <View style={{ flex: 1, flexDirection: 'row' }}>
-                <View style={{ flex: 1 }}><Text>{observation.time.getHours() + ":"
-                  + observation.time.getMinutes() + " "
-                  + observation.time.toLocaleDateString()}</Text></View>
-                <View style={{ flex: 1 }}><Text>{observation.rarity}</Text></View>
+                {/**Date and time */}
+                <View style={{ flex: 1 }}>
+                  <Text>
+                    {observation.time.getHours() + ":"
+                      + observation.time.getMinutes() + " "
+                      + observation.time.toLocaleDateString()}
+                  </Text>
+                </View>
+                {/**Rarity */}
+                <View style={{ flex: 1 }}>
+                  <Text>
+                    {observation.rarity}
+                  </Text>
+                </View>
+                {/**Notes */}
               </View>
-              <View style={{ flex: 2 }}><Text>{observation.notes}</Text></View>
+              <View style={{ flex: 2 }}>
+                <Text>
+                  {observation.notes}
+                </Text>
+              </View>
             </View>
-
             }
           />
         )}
       ></FlatList>
+    //BIRDLIST - End
 
     return (
 
-      /**Home screen uses mainmenu styles */
-      <View style={styles.mainmenu}>
+      /**HomeScreen uses homescreen styles */
+      <View style={styles.homescreen}>
         {/**List of all the birds*/}
         <View style={styles._birdListBackground}>
           <ScrollView>
+            {/**This is where BIRDLIST resides*/}
             {currentList}
           </ScrollView>
         </View>
         {/*Button to add new bird in the list*/}
         <View style={styles._addButton}>
           <Button
-            color='#a7364f'
-            onPress={() => this.props.navigation.navigate('AddForm', { onNavigateBack: this.handleOnNavigateBack })}
             title="+ ADD NEW"
+            color='#a7364f'
+            //Navigates to add form Screen
+            onPress={() => this.props.navigation.navigate('AddForm',
+              { onNavigateBack: this.handleOnNavigateBack })}
           />
         </View>
       </View>
@@ -184,31 +252,49 @@ class HomeScreen extends React.Component {
   }
 }
 
-/**Handles observation adding form as seperate class - TODO*/
+/**
+ * New observation form
+ */
 class AddFormScreen extends React.Component {
+  //Navigation bar text
   static navigationOptions = {
     title: 'Add new observation',
   };
 
+  //CONSTRUCTOR for AddFormScreen
   constructor(props) {
     super(props)
 
     this.state = {
+      //Name, rarity and Notes hold info entered by user.
+      //At save they're added to new observation
       name: 'None',
       rarity: 'Common',
       notes: 'None',
+      //Rarity is entered via Dialog
+      //This determines whethever it will be visible
       rarityDialogVisible: false,
+      //State of Refreshing
       refreshing: false,
+      //Seed to mix things up
       seed: 0,
     }
 
   }
 
+  //Save observation when adding it to list
+  saveObservation() {
+    ;//[TODO]:[Add saving]
+  }
+
+  //Refreshing AddFormScreen basicly same as in HomeScreen
   onRefresh = () => {
     this.setState({
+      //Inform we're refreshing
       refreshing: true,
       seed: this.state.seed + 1,
     },
+      //And that we're out [TODO]:[Check HomeScreen -> onRefresh()]
       function () {
         this.setState({
           refreshing: false,
@@ -217,31 +303,48 @@ class AddFormScreen extends React.Component {
     );
   };
 
+  //AddFormScreen RENDER
   render() {
     return (
       <View style={{ flex: 1, flexDirection: 'column' }}>
-        <View style={{ flex: 1, padding: 40, paddingTop: 20, justifyContent: 'space-between'}}>
+        {/**Inputs are here */}
+        <View style={{ flex: 1, padding: 40, paddingTop: 20, justifyContent: 'space-between' }}>
           <ScrollView >
+            {/**NAME of the Species */}
             <TextInput
               onChangeText={(text) => { this.setState({ name: text }) }}
               style={{ height: 40, borderBottomWidth: 1, borderColor: 'grey' }}
               placeholder="Name of the species"
             ></TextInput>
-            <View style={{height: 10}}/>
+
+            {/**Space around button */}
+            <View style={{ height: 10 }} />
+
+            {/**RARITY selection button */}
             <Button
               title="Select rarity"
               padding={5}
               color='#a7364f'
-              onPress={() => {this.setState({
-                rarityDialogVisible: true,
-              })}}
+              /**on press show dialog */
+              onPress={() => {
+                this.setState({
+                  rarityDialogVisible: true,
+                })
+              }}
             ></Button>
-            <View style={{height: 10}}/>
-            <Dialog.Container 
+
+            {/**Space around button */}
+            <View style={{ height: 10 }} />
+
+            {/**DIALOG to select rarity */}
+            <Dialog.Container
               visible={this.state.rarityDialogVisible}
-              refreshing = {this.state.refreshing}
+              refreshing={this.state.refreshing}
               onRefresh={this.onRefresh}>
               <Dialog.Title>Choose observation rarity:</Dialog.Title>
+              
+              {/**Three buttons to choose RARITY */}
+              {/**COMMON */}
               <Dialog.Button label="Common"
                 onPress={() => {
                   this.setState({
@@ -249,6 +352,7 @@ class AddFormScreen extends React.Component {
                     rarityDialogVisible: false,
                   })
                 }} />
+              {/**RARE */}
               <Dialog.Button label="Rare"
                 onPress={() => {
                   this.setState({
@@ -256,6 +360,7 @@ class AddFormScreen extends React.Component {
                     rarityDialogVisible: false,
                   })
                 }} />
+              {/**EXTREMELY RARE */}
               <Dialog.Button label="Extremely rare"
                 onPress={() => {
                   this.setState({
@@ -263,19 +368,25 @@ class AddFormScreen extends React.Component {
                     rarityDialogVisible: false,
                   })
                 }} />
+
             </Dialog.Container>
+
+            {/**NOTES writing section */}
             <TextInput
               onChangeText={(text) => { this.setState({ notes: text }) }}
               multiline={true}
               style={{ borderBottomWidth: 1, borderColor: 'grey' }}
               placeholder="Notes"
             ></TextInput>
+
           </ScrollView>
         </View>
+
+        {/**Save button */}
         <View style={styles._addButton}>
-          {/**Save button */}
           <Button
             color='#a7364f'
+            title="SAVE"
 
             /**Save clicked*/
             onPress={() => {
@@ -286,12 +397,13 @@ class AddFormScreen extends React.Component {
                 notes: this.state.notes,
                 time: new Date(),
               }
+              //Save to file and BirdList before quiting
+              this.saveObservation(newObs)
               observationArray.push(newObs)
-              //Go back to main
+              //Go back to main and call onNavigateBack to refresh list
               this.props.navigation.state.params.onNavigateBack()
               this.props.navigation.goBack()
             }}
-            title="SAVE"
           />
         </View>
       </View>
@@ -299,16 +411,19 @@ class AddFormScreen extends React.Component {
   }
 }
 
-/**App Navigator - takes care of moving between screens */
+/**
+ * App Navigator
+ * takes care of moving between screens
+ */
 const AppNavigator = createStackNavigator(
   {
     /**Home screen address */
     Home: HomeScreen,
-    /**Add form screen address */
+    /**New observation form address */
     AddForm: AddFormScreen,
   },
   {
-    /**App starts on Home page */
+    /**App starts on Home screen */
     initialRouteName: "Home",
 
     /**Header styles */
@@ -322,7 +437,7 @@ const AppNavigator = createStackNavigator(
 );
 const AppContainer = createAppContainer(AppNavigator);
 
-/**App component to run the show [start app]*/
+//App component to run the show [start app]
 export default class App extends React.Component {
   render() {
     return <AppContainer />;
