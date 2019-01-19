@@ -2,7 +2,7 @@
 *by Lassi Valtari*/
 
 import React, {Component} from 'react';
-import {Alert, Button, FlatList, ScrollView, StyleSheet, Text, View} from 'react-native';
+import {Alert, Button, FlatList, ListView, ScrollView, StyleSheet, Text, View} from 'react-native';
 import {createStackNavigator, createAppContainer} from 'react-navigation';
 import { TextInput } from 'react-native-gesture-handler';
 
@@ -42,18 +42,7 @@ const styles = StyleSheet.create ({
   //TODO
 })
 
-/**
- * Runtime data handling
- * This keeps track of all observations created
- */
-//Observation object constructor
-function Observation (name, rarity, notes, timestamp) {
-  this.name = name;
-  this.rarity = rarity;
-  this.notes = notes;
-  this.timestamp = timestamp;
-}
-//Array to keep track of Observations
+//Array of ongoing observations
 var observationArray = new Array();
 
 /**Home screen*/
@@ -62,23 +51,63 @@ class HomeScreen extends React.Component {
     title: 'BIRDCASE',
   };
 
+  constructor(props) {
+    super(props);
+    var dataSource = new ListView.DataSource({rowHasChanged:(rowSt, rowNd) => rowSt.guid != rowNd.guid});
+    
+    this.state = {
+      dataSource: dataSource.cloneWithRows(observationArray),
+      loading: false,
+    }
+  }
+
+  componentDidMount() {
+    this.getTheData(function(json) {
+      observationArray = json;
+      this.setState({
+        dataSource: this.state.dataSource.cloneWithRows(observationArray),
+        loading: false,
+      });
+    }.bind(this));
+  }
+
+  getTheData(callback) {
+    callback(
+      [{
+        name: 'Testi Tikka',
+        rarity: 'Common',
+        notes: 'None',
+      },
+      {
+        name: 'Testi2 Tikka',
+        rarity: 'Common',
+        notes: 'None',
+      }]
+    )
+  }
+
+  renderRow(rowData, sectionID, rowID) {
+    return (
+      <View>
+        <Text numberOfLines={1}>{rowData.name} | {rowData.rarity} | {rowData.notes}</Text>
+      </View>
+    );
+  }
+
   render() {
+
+    var currentList =(this.state.loading)?<View/>:<ListView
+      dataSource = {this.state.dataSource}
+      renderRow= {this.renderRow.bind(this)
+      }></ListView>
+
     return (
       /**Home screen uses mainmenu styles */
       <View style={styles.mainmenu}>
         {/**List of all the birds*/}
         <View id="BirdsList" style={styles._birdListBackground}>
           <ScrollView>
-            <FlatList
-              numColumns
-              style={styles._birdList}
-              data={[
-                {key:'Amazing Bird'},
-                {key:'Epic Bird'},
-                {key:'Über bird'},
-              ]}
-              renderItem={({item}) => <Text style={{fontSize: 20}}>{item.key}</Text>}
-            />
+            {currentList}
           </ScrollView>
         </View>
         {/*Button to add new bird in the list*/}
@@ -126,10 +155,12 @@ class AddFormScreen extends React.Component {
 
         /**Save clicked*/
         onPress={() => {
-          /**Create new Observation */
-          var newObs = new Observation(this.state.name, 
-            this.state.rarity, this.state.notes, new Date())
-          //Add it to the Array
+          //Add observation to the Array
+          newObs = {
+            name: this.state.name, 
+            rarity: this.state.rarity, 
+            notes: this.state.notes,
+          }
           observationArray.push(newObs)
           //Go back to main
           this.props.navigation.goBack()
