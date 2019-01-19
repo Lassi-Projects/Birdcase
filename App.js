@@ -57,9 +57,9 @@ class HomeScreen extends React.Component {
     super(props);
 
     this.state = {
-      loading: false,
       data: [],
       refreshing: false,
+      loading: false,
       seed: 0,
     };
   }
@@ -69,15 +69,14 @@ class HomeScreen extends React.Component {
       observationArray = json;
       this.setState({
         data: observationArray,
-        loading: false,
         refreshing: false,
+        loading: false,
       });
     }.bind(this));
   }
 
   getTheData(callback) {
     this.setState({
-      loading: true,
       refreshing: false,
     });
     callback(
@@ -92,14 +91,20 @@ class HomeScreen extends React.Component {
     );
   }
 
-  refreshList = () => {
+  onRefresh = () => {
     this.setState({
       refreshing: true,
       seed: this.state.seed + 1,
-    }, () => {
-      this.getTheData();
-    })
+    },
+    function () {this.setState({
+      refreshing: false,
+    })}
+    );
   };
+
+  handleOnNavigateBack = () => {
+    this.onRefresh()
+  }
 
   render() {
 
@@ -109,7 +114,7 @@ class HomeScreen extends React.Component {
         data = {this.state.data}
         refreshing ={this.state.refreshing}
 
-        onRefresh={this.refreshList}
+        onRefresh={this.onRefresh}
 
         renderItem= {({item:observation}) => (
           <ListItem
@@ -137,9 +142,6 @@ class HomeScreen extends React.Component {
       
       /**Home screen uses mainmenu styles */
       <View style={styles.mainmenu}>
-        {/* <NavigationEvents
-          onWillFocus = {this.refreshList()}
-        ></NavigationEvents> */}
         {/**List of all the birds*/}
         <View  style={styles._birdListBackground}>
           <ScrollView>
@@ -150,7 +152,7 @@ class HomeScreen extends React.Component {
         <View style={styles._addButton}>
           <Button
           color='#a7364f'
-          onPress={() => this.props.navigation.navigate('AddForm')}
+          onPress={() => this.props.navigation.navigate('AddForm', {onNavigateBack: this.handleOnNavigateBack})}
           title="+ ADD NEW"
           />
         </View>
@@ -200,6 +202,7 @@ class AddFormScreen extends React.Component {
           }
           observationArray.push(newObs)
           //Go back to main
+          this.props.navigation.state.params.onNavigateBack()
           this.props.navigation.goBack()
         }}
         title="SAVE"
