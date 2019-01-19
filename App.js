@@ -175,18 +175,34 @@ class AddFormScreen extends React.Component {
       rarity: 'Common',
       notes: 'None',
     }
+
   }
+
 
   render() {
     return (
-      <View>
-        <View>
-          <TextInput
-            style={{height: 40}}
-            placeholder = "Name of the species"
-          ></TextInput>
+      <View style={{flex: 1, flexDirection: 'column'}}>
+        <View style={{flex: 1, padding: 40, paddingTop: 20}}>
+          <ScrollView >
+            <TextInput
+              onChangeText ={(text) => {this.setState({name: text})}}
+              style={{height: 40, borderBottomWidth: 1, borderColor: 'grey'}}
+              placeholder = "Name of the species"
+            ></TextInput>
+            <TextInput
+              onChangeText ={(text) => {this.setState({rarity: text})}}
+              style={{height: 40, borderBottomWidth: 1, borderColor: 'grey'}}
+              placeholder = "Rarity"
+            ></TextInput>
+            <TextInput
+              onChangeText ={(text) => {this.setState({notes: text})}}
+              multiline= {true}
+              style={{borderBottomWidth: 1, borderColor: 'grey'}}
+              placeholder = "Notes"
+            ></TextInput>
+          </ScrollView>
         </View>
-        <View id="AddNewButton" style={styles._addButton}>
+        <View style={styles._addButton}>
         {/**Save button */}
         <Button
         color='#a7364f'
