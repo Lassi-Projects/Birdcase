@@ -2,7 +2,7 @@
  *by Lassi Valtari*/
 
 import React, { Component } from 'react';
-import { Alert, Button, FlatList, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Alert, AsyncStorage, Button, FlatList, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { createStackNavigator, createAppContainer, NavigationEvents } from 'react-navigation';
 import { TextInput } from 'react-native-gesture-handler';
 import { List, ListItem } from "react-native-elements";
@@ -108,40 +108,77 @@ class HomeScreen extends React.Component {
   //Upon entering the HomeScreen (startind App)
   //saved Observation are to be loaded
   componentDidMount() {
-    //Call function to load Observations
-    this.loadSaved(function (json) {
-      //Loaded observations in Array json
-      observationArray = json;
-      //Sort observations by timestamp
-      observationArray = this.sortObservations(observationArray, 'Date'),
-        //Finally inform about end of loading and refreshing
-        this.setState({
-          //observations reference added to data key
-          data: observationArray,
-          refreshing: false,
-          loading: false,
-        });
-    }.bind(this));
-  }
+    let newObs = {
+      name: 'Testi Tirppa',
+      rarity: 'Rare',
+      notes: 'Testi onnistui!',
+      time: new Date(),
+      key: 'testitirpanomakey',
+    }
+    this.saveObservation(newObs);
 
-  //Method for loading saved observations
-  loadSaved(callback) {
     this.setState({
       //Inform about state of loading
       refreshing: true,
       loading: true,
     });
-    callback(
-      //[TODO]:[Add file loading]
-      [
-        {
-          name: 'Birdie',
-          rarity: 'Common',
-          notes: 'No notes',
-          time: new Date(),
-        }
-      ]
-    );
+    //Call function to load Observations
+    this.loadSaved().then(() => {
+      //Sort observations by timestamp
+      observationArray = this.sortObservations(observationArray, 'Date');
+      this.setState({
+        //observations reference added to data key
+        data: observationArray,
+        refreshing: false,
+        loading: false,
+      });
+    }).catch((error) => {
+      console.log('Promise rejected :' + error)
+    });
+  }
+
+  /**
+   * DEBUG */
+  async saveObservation(newObservation) {
+    try {
+      let key = newObservation.key;
+      var promiseObservation = 
+        await AsyncStorage.setItem(key, 
+          JSON.stringify(newObservation));
+      
+        //Get observation
+      let observationJSON = await AsyncStorage.getItem(newObservation.key);
+      //Initially it's string so we need to parse it
+      const observation = JSON.parse(observationJSON)
+      //Add to list
+      observationArray.push(observation);
+      return promiseObservation;
+    } catch (error) {
+      console.log('Save promise rejected: ' + error);
+    }
+  }
+  /**DEBUG END
+   * 
+   */
+
+  //Method for loading saved observations
+  async loadSaved() {
+    try {
+      //Get keys for all saved items
+      let loadedItemKeys = await AsyncStorage.getAllkeys();
+      //For each found key retrieve observation
+      loadedItemKeys.forEach(async (key) => {
+        //Get observation
+        let observationJSON = await AsyncStorage.getItem(key);
+        //Initially it's string so we need to parse it
+        const observation = JSON.parse(observationJSON);
+        //Add to list
+        observationArray.push(observation);
+      });
+    }
+    catch (error) {
+      console.log(error.message);
+    }
   }
 
   //Refreshing HomeScreen
@@ -178,7 +215,7 @@ class HomeScreen extends React.Component {
       <FlatList
         //Every observations is given a key to identify
         //Here I used time in milliseconds [TODO]:[Throws warning -> fix]
-        keyExtractor={observation => { observation.time.getTime().toString() }}
+        keyExtractor={observation => { observation.key }}
         //Flat list uses ObservationsList behind data-key
         data={this.state.data}
 
@@ -201,9 +238,7 @@ class HomeScreen extends React.Component {
                 {/**Date and time */}
                 <View style={{ flex: 1 }}>
                   <Text>
-                    {observation.time.getHours() + ":"
-                      + observation.time.getMinutes() + " "
-                      + observation.time.toLocaleDateString()}
+                    {observation.time}
                   </Text>
                 </View>
                 {/**Rarity */}
@@ -283,8 +318,16 @@ class AddFormScreen extends React.Component {
   }
 
   //Save observation when adding it to list
-  saveObservation() {
-    ;//[TODO]:[Add saving]
+  async saveObservation(newObservation) {
+    try {
+      let key = newObservation.key
+      var promiseObservation = 
+        AsyncStorage.setItem(key, 
+          JSON.stringify(newObservation));
+      return promiseObservation;
+    } catch (error) {
+      console.log('Save promise rejected: ' + error);
+    }
   }
 
   //Refreshing AddFormScreen basicly same as in HomeScreen
@@ -390,12 +433,21 @@ class AddFormScreen extends React.Component {
 
             /**Save clicked*/
             onPress={() => {
+              this.setState({
+                seed: this.state.seed + 1,
+              });
+              let thisMoment = new Date();
+              let thisTime = thisMoment.getHours() + ":"
+              + thisMoment.getMinutes() + " "
+              + thisMoment.toLocaleDateString();
+              let obsKey = "" + thisMoment.getTime() + this.state.seed;
               //Add observation to the Array
               newObs = {
                 name: this.state.name,
                 rarity: this.state.rarity,
                 notes: this.state.notes,
-                time: new Date(),
+                time: thisTime,
+                key: obsKey,
               }
               //Save to file and BirdList before quiting
               this.saveObservation(newObs)
